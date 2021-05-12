@@ -17,51 +17,53 @@ library(foreach)
 library(ggcorrplot)
 library(utils)
 
-load("/Users/hannahjones/Desktop/pfi_pu_pert_rdata")
+ppfi_trimmed <- read.csv('https://raw.githubusercontent.com/Joey-Herrera/Data-Mining-Project/main/NHES/ppfi_trimmed.csv')
 
-ppfi <- pfi_pu_pert
-
-#remove homeschool data-- only look at in-person school observations
-ppfi <- ppfi[-c(11:97)]
-
-#remove online school data
-ppfi <- ppfi[-c(44:70)]
-
-#remove non-sampled children information
-ppfi <- ppfi[-c(276:291)]
- #save with weighting and imputation flags
-ppfi_withweighting <- ppfi
-
-#remove weighting info
-ppfi <- ppfi[-c(276:358)]
-
-#if there were missing values, they were imputed as shown by flags in data.  We remove this data
-ppfi <- ppfi[-c(276:615)]
-
-#cut data for schools dont give grades (SEGRADES == 5)
-ppfi_trimmed<- ppfi %>%
-  filter(SEGRADES != 5)
-
-write.csv(ppfi_trimmed, "/Users/hannahjones/Documents/GitHub/Data-Mining-Project/NHES/ppfi_trimmed.csv")
-
-#now go to ppfi_analysis doc
 
 #columns 87-91? parent's satisfaction with school
 
 #feature engineering:
 #Combine bros/sis into siblings, ,mom/dad into parents, gma/gpa/aunt/unc/cuz into extended fam
 
-#forest1 = randomForest( SEGRADES ~ . -SEGRADEQ - BASMID, data = ppfi_train)
-#modelr::rmse(forest1, ppfi_test)
-#yhat_test = predict(forest1, ppfi_test)
-#plot(yhat_test, ppfi_test$SEGRADES)
-#varImpPlot(forest1)
-
 #change all -1 to 0
-ppfi_recode <- lapply(ppfi, as.character)
+ppfi_recode <- lapply(ppfi_trimmed, as.character)
 ppfi_recode[ppfi_recode == "-1"] <- "0"
 ppfi_recode<- lapply(ppfi_recode, as.numeric)
 ppfi_recode<- data.frame(ppfi_recode)
+
+#intro graphs
+
+#frequency of attending school meetings, avg days spent helping with hw, 
+ppfi_recode %>%
+  filter(CWHITE == 1) %>%
+  summarize(avg_grades = mean(SEGRADES),avg_school_meetings = mean(FSFREQ), avg_days_hwhelp = mean(FHHELP), avg_dinners_together = mean(FODINNERX))
+
+ppfi_recode %>%
+  filter(CBLACK == 1) %>%
+  summarize(avg_grades = mean(SEGRADES), avg_school_meetings = mean(FSFREQ), avg_days_hwhelp = mean(FHHELP), avg_dinners_together = mean(FODINNERX))
+
+ppfi_recode %>%
+  filter(CASIAN == 1) %>%
+  summarize(avg_grades = mean(SEGRADES), avg_school_meetings = mean(FSFREQ), avg_days_hwhelp = mean(FHHELP), avg_dinners_together = mean(FODINNERX))
+
+ppfi_recode %>%
+  filter(CHISPAN == 1) %>%
+  summarize(avg_grades = mean(SEGRADES), avg_school_meetings = mean(FSFREQ), avg_days_hwhelp = mean(FHHELP), avg_dinners_together = mean(FODINNERX))
+
+#speak spanish or other non-english at home
+ppfi_recode %>%
+  filter(CSPEAKX == 3 | CSPEAKX == 5) %>%
+  summarize(avg_grades = mean(SEGRADES), avg_school_meetings = mean(FSFREQ), avg_days_hwhelp = mean(FHHELP), avg_dinners_together = mean(FODINNERX))
+
+#english at home
+ppfi_recode %>%
+  filter(CSPEAKX == 2) %>%
+  summarize(avg_grades = mean(SEGRADES), avg_school_meetings = mean(FSFREQ), avg_days_hwhelp = mean(FHHELP), avg_dinners_together = mean(FODINNERX))
+
+#compare grades to a few different factor starting with FO-- zoo and whatnot
+
+
+#Building a model for success
 
 ppfi_split = initial_split(ppfi_recode)
 n = nrow(ppfi_recode)

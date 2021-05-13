@@ -1,3 +1,4 @@
+library(plyr)
 library(dplyr)
 library(tidyverse)
 library(tidyr)
@@ -40,7 +41,7 @@ ppfi <- ppfi[-c(276:615)]
 
 #cut data for schools dont give grades (SEGRADES == 5)
 ppfi_trimmed<- ppfi %>%
-  filter(SEGRADES != 5)
+  filter(SEGRADES != 5) 
 
 write.csv(ppfi_trimmed, "/Users/hannahjones/Documents/GitHub/Data-Mining-Project/NHES/ppfi_trimmed.csv")
 

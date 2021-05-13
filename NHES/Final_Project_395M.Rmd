@@ -1,8 +1,12 @@
 ---
 title: "ECO 395M Final Project"
 author: "Hannah Jones & Joey Herrera"
+header-includes:
+   - \usepackage{setspace}\doublespacing
 date: "5/10/2021"
 output: pdf_document
+fontsize: 12pt
+sansfont: Times New Roman
 ---
 
 ```{r setup, include=FALSE}
@@ -26,25 +30,18 @@ library(foreach)
 library(ggcorrplot)
 library(utils)
 library(fpc)
-
-
 ppfi_trimmed <- read.csv('https://raw.githubusercontent.com/Joey-Herrera/Data-Mining-Project/main/NHES/ppfi_trimmed.csv')
-
 #remove skips for student grades 
 ppfi_recode <- ppfi_trimmed %>%
   filter(SEGRADES != -1)
 ppfi_recode[ppfi_recode<0]<- 0
 ppfi_recode<- lapply(ppfi_recode, as.numeric)
 ppfi_recode<- data.frame(ppfi_recode)
-
-
 #feature engineering
-
 #hw involvement-- someone checks about or helps with homework
 #creative opportunities if read to child, do crafts, go to zoo, plays, etc-- engaging with child in non-school creative pursuits
 #family time talking about responsibilities, family history, having dinner together more than 3 times
 #number of siblings combined, number of relatives in house, number non-relatives in house
-
 ppfi_feateng<- ppfi_recode %>%
   mutate(hw_involve = ifelse(FHCHECKX > 3 | FHHELP > 1, 1,0), 
          create_op = ifelse(FOSTORY2X==1 | FOCRAFTS == 1 | FOGAMES == 1 | FOBUILDX == 1 |FOSPORT == 1, 1, 0),
@@ -70,17 +67,13 @@ ppfi_feateng<- ppfi_recode %>%
          internet_access = ifelse(INTACC<4|HVINTSPHO==1|HVINTCOM==1|CHLDNT<5|LRNCOMP==1|LRNTAB==1|LRNCELL==1,1,0),
          school_choice_pos = ifelse(SCCHOICE==1|SPUBCHOIX==1|S1STCHOI==1,1,0))
          
-
-
 ppfi_feateng <- select(ppfi_feateng, -c(FHCHECKX, FHHELP, FOSTORY2X, FOCRAFTS, FOGAMES, FOBUILDX, FOSPORT, FORESPON, 
                                        FOHISTX, FODINNERX, FOLIBRAYX, FOBOOKSTX, FOCONCRTX, FOMUSEUMX, FOZOOX, FOGROUPX, 
                                        FOSPRTEVX, HHBROSX, HHSISSX, HHAUNTSX, HHUNCLSX, HHGMASX, HHGPASX, HHCSNSX, HHORELSX,
                                        HHPRTNRSX, HHONRELSX, HHENGLISH, HHSPANISH, HHFRENCH, HHCHINESE, HHOTHLANG, P1FRLNG, P1MRSTA,
                                        P1SPEAK, P1AGEMV, FSSPORTX, FSVOL,FSMTNG, FSPTMTNG, FSATCNFN,FSFUNDRS, FSCOMMTE,FSCOUNSLR,
                                        FSNOTESX, FSMEMO, FSPHONCHX, P1HRSWK, EDCPUB, EDCPRI, EDCHSFL, EDCCAT, EDCREL, EDCINTK12, EDCINTCOL, EDCCOL, SEREPTK, SEREPT1, SEREPT2, SEREPT3, SEREPT4, SEREPT5, SEREPT6, SEREPT7, SEREPT8, SEREPT9, SEREPT10, SEREPT11, SEREPT12, SESUSOUT, SESUSPIN, SEEXPEL, HHPARN19_BRD, P2GUARD, FAMILY19_BRD,P1BFGF,FAMILY19X, INTACC, HVINTSPHO, HVINTCOM, CHLDNT, LRNCOMP, LRNTAB, LRNCELL, SCCHOICE, SPUBCHOIX, S1STCHOI, LOCALE, SCHLSAFETY, SCHLSTFQUALITY, AVAILCOURSE, XTRACURRIC, STUDNTCHAR, STUDNTPERFORM, RELIGSOR, SPECALEDSERVS, SPECALFACILTS, CLSSIZE, SCHLCOST, SCONSIDR))
-
 ppfi_feateng<- select(ppfi_feateng, -c(8:18))
-
 ```
 
 ## Abstract
@@ -97,15 +90,11 @@ Student success, which is traditionally measured through standardized test score
 
 ```{r warning = FALSE, error=FALSE, message=FALSE}
 #Graph showing difference in involvement for families that work longer hours and families that do not speak english
-
 #families who work more-- less time for involvement
-
-
 workhrs_race<- data.frame(HourBins = c("0", "0-20","20-40","40+"),ppfi_feateng %>%
   group_by(P1HRSWK_bins, P1WHITE)%>%
   summarize(avg_grades = mean(SEGRADES),avgparentinvolv = mean(parent_involved_school), 
             avg_cultural_exp= mean(cultural_exp), avg_fam_time = mean(fam_time), meancreateop = mean(create_op), mean_enjoy = mean(SEENJOY)))
-
 workhrs<- data.frame(HourBins = c("0", "0-20","20-40","40+"),ppfi_feateng %>%
   group_by(P1HRSWK_bins)%>%
   summarize(avg_grades = mean(SEGRADES),avgparentinvolv = mean(parent_involved_school), 
@@ -122,20 +111,17 @@ ggplot(workhrs_race)+
   xlab("Hrs Work/Wk")+
   ylab("Proportion of Parents Involved")+
   labs(title = "FIgure 1: Proportion of Parents Involved at School", caption = "Facets: 1=white, 2=non-white; Y-axis: 1 is A's, 2 is B's; x-axis: increasing from 0 as work hrs increase")
-
 ggplot(workhrs_race)+
   geom_col(aes(x=P1HRSWK_bins, y = avg_grades))+
   facet_wrap(~P1WHITE)+
   xlab("Hrs Work/Wk")+
   ylab("Average Grades")+
   labs(title = "Figure 2: Average Grades by Race and Parent Hours of Work", caption = "Facets: 1=white, 2=non-white; Y-axis: 1 is A's, 2 is B's; x-axis: increasing from 0 as work hrs increase")
-
 non_english<- data.frame(Language = c("Other non-english", "English"),ppfi_feateng %>%
   group_by(english_speakinghh)%>%
   summarize(avg_grades = mean(SEGRADES),avgparentinvolv = mean(parent_involved_school), 
             avg_cultural_exp= mean(cultural_exp), avg_fam_time = mean(fam_time), meancreateop = mean(create_op), mean_enjoy = mean(SEENJOY)))
 non_english
-
 ```
 Table 2: Household Language versus Outcomes
 
@@ -163,21 +149,15 @@ Running the principle components analysis on the dataset yields a total of 235 p
 
 
 ```{r}
-
 ppfi_pca_data <- select(ppfi_feateng, -c(SEGRADES, X, BASMID))
 ppfi_pca_data = scale(ppfi_pca_data , center=TRUE, scale=TRUE)
 mu = attr(ppfi_pca_data,"scaled:center") # mean
 sigma = attr(ppfi_pca_data,"scaled:scale")
-
 pca_ppfi = prcomp(ppfi_pca_data, scale=TRUE)
-
 loadings_ppfi = pca_ppfi$rotation
 scores_ppfi = pca_ppfi$x
 #summary(pca_ppfi)
-
-
 ppfi_combined = data.frame(ppfi_feateng$SEGRADES, pca_ppfi$x[,1:60])
-
 ppfi_split = initial_split(ppfi_combined)
 n = nrow(ppfi_combined)
 n_train = floor(0.8*n)
@@ -185,15 +165,10 @@ n_test = n - n_train
 train_cases = sample.int(n, size=n_train, replace=FALSE)
 ppfi_train = training(ppfi_split)
 ppfi_test = testing(ppfi_split)
-
-
 # run a random forest using PCA variables 
-
 ppfi_train$ppfi_feateng.SEGRADES = factor(ppfi_train$ppfi_feateng.SEGRADES) 
-
 grades_forest = randomForest(ppfi_feateng.SEGRADES ~ .,
                              data = ppfi_train, importance = TRUE)
-
 yhat = predict(grades_forest, ppfi_test)
 comp_table<-as.data.frame(table(yhat,as.factor(ppfi_test$ppfi_feateng.SEGRADES)))
 predicted<-yhat
@@ -202,7 +177,6 @@ comp_table<-as.data.frame(cbind(actual,predicted))
 comp_table$flag<-ifelse(comp_table$actual==comp_table$predicted,1,0)
 tot_correct<- sum(comp_table$flag)
 percent_correct<- sum(comp_table$flag)*100/nrow(comp_table)
-
 accuracy_df<- data.frame(Accuracy = c("Total Predicted Correct", "Percent Correct"), Outcome = c(tot_correct, percent_correct))
 accuracy_df
 ```
@@ -226,7 +200,6 @@ The prediction model discussed above runs at about 65-70% accuracy.  The lack of
 pc_grades <- ppfi_combined %>%
   group_by(ppfi_feateng.SEGRADES)%>%
   summarise(avgpc1 = mean(PC1), avgpc3 = mean(PC3), avgpc37 = mean(PC37), avgpc21 = mean(PC21), avgpc18 = mean(PC18))
-
 pc_grades_df <-  data.frame(Grades = c("Mostly A's","Mostly B's","Mostly C's","Mostly D's"), pc_grades)
 pc_grades_df
 ```
@@ -240,13 +213,11 @@ o3 = order(loadings_ppfi[,3], decreasing=TRUE)
 o37 = order(loadings_ppfi[,37], decreasing=TRUE)
 o21 = order(loadings_ppfi[,21], decreasing=TRUE)
 o18 = order(loadings_ppfi[,18], decreasing=TRUE)
-
 headPC1<-colnames(ppfi_pca_data)[head(o1,5)]
 headPC3<-colnames(ppfi_pca_data)[head(o3,5)]
 headPC37<-colnames(ppfi_pca_data)[head(o37,5)]
 headPC21<-colnames(ppfi_pca_data)[head(o21,5)]
 headPC18<-colnames(ppfi_pca_data)[head(o18,5)]
-
 pc_heads<- data.frame( headPC1, headPC3, headPC37, headPC21, headPC18)
 pc_heads
 ```
@@ -258,8 +229,9 @@ These findings suggest a number of interesting possible interventions to help pa
 
 Given the importance of family involvement in student success as asserted by previous research and findings within the data, schools have put resources into creating programs that address the specific needs based on the demographic and socioeconomic information of student families. In particular, low-income and minority parents are less likely to be involved with their students' education in a traditional sense. Various structural factors including working multiple jobs or obstructive job hours. To provide these demographics with alternate opportunities schools have provided  multiple opportunities for involvement, value different perspectives, and reach out to families in culturally appropriate ways (Auerbach, 2007). Schools must continue to adapt to their individual demographics because traditional concepts of family involvement limit the opportunity for low-income and minority-families to be involved. Thus, those students are likely to have less academic success than their counterparts.  As our findings suggest, race and disabilities are highly impactful on student success and should be greatly considered when schools design programs to involve students and their families in meaningful ways.
 
-An efficient way to provide recommendations to schools and policymakers is through the involvement of machine learning techniques. These data science skills have the power to delineate trends from large data sets, such as data revolving around the number of students in a school, in an interpretable manner. Besides predicting student success, there are a variety of places that machine learning can enhance the education sector. For instance, creating adaptive learning for people with different learning styles, improving efficiency in the learning environment, and assessment evaluation are just a few ways machine learning can postivly impact the education sector (Ryan, 2020).
+An efficient way to provide recommendations to schools and policymakers is through the involvement of machine learning techniques. These data science skills have the power to delineate trends from large data sets, such as data revolving around the number of students in a school, in an interpretable manner. Besides predicting student success, there are a variety of places that machine learning can enhance the education sector. For instance, creating adaptive learning for people with different learning styles, improving efficiency in the learning environment, and assessment evaluation are just a few ways machine learning can postively impact the education sector (Ryan, 2020).
 
+\newpage 
 ## References
 
 Auerbach, Susan. “Visioning Parent Engagement in Urban Schools.” Journal of School Leadership, vol. 17, no. 6, Nov. 2007, pp. 699–734, doi:10.1177/105268460701700602.
